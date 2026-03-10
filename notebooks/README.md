@@ -117,7 +117,7 @@ Key features:
 
 ---
 
-### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly.ipynb`
+### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_zoommaps.ipynb`
 
 **Topic:** Month-by-month evolution of LSSTCam visit counts across the 6 LSST bands.
 
@@ -153,6 +153,48 @@ Workflow:
 **Key dependencies:** `healpy`, `numpy`, `pandas`, `matplotlib`, `astropy`
 
 ---
+---
+
+### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_subplots.ipynb`
+
+**Topic:** Month-by-month evolution of LSSTCam visit counts across the 6 LSST bands.
+
+This notebook do the same task as in  `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_zoommaps.ipynb` by adding a   **temporal dimension**: the visit data are sliced by calendar month so that the  
+growth and spatial distribution of the survey can be tracked over time.
+However bands-skymaps are grouped as subplots in the monthly figures.
+Note NSIDE = 32 due to tiny subplots.
+
+Workflow:
+
+1. **Date extraction** — The integer `day_obs` field (format `YYYYMMDD`) is parsed  
+   with `pd.to_datetime` and converted to a `pandas.Period` (`year_month`).  
+   The sorted list of unique months drives all subsequent loops.
+
+2. **Monthly HEALPix sky maps** (Section 6) — For each month and each of the  
+   6 bands (*u, g, r, i, z, y*), a HEALPix visit-count map is built and displayed  
+   in Mollweide projection with the Galactic plane and DDF overlays.  
+   Months or bands with zero visits are skipped gracefully.  
+   Per-band statistics (visit count, pixel count, sky area, max depth) are printed.
+
+3. **Summary table** (Section 7) — A tidy `pandas.DataFrame` (`df_monthly`) collects  
+   visit counts for every `(month, band)` combination, plus a `Total` column.
+
+4. **Grouped bar chart** (Section 8) — One group of 6 colour-coded bars per month,  
+   one bar per band, with the total visit count annotated above each group.
+
+5. **Stacked bar chart** (Section 9) — Same data in a stacked layout to show the  
+   cumulative visit count per month.
+
+6. **Normalised band fraction** (Section 10) — A 100%-stacked bar chart showing  
+   the relative contribution of each band per month, useful for detecting changes  
+   in the survey scheduling strategy.
+
+**Key dependencies:** `healpy`, `numpy`, `pandas`, `matplotlib`, `astropy`
+
+---
+
+
+
 
 ## Environment Setup
 
