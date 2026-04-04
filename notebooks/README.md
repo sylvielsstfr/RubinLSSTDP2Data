@@ -1,204 +1,406 @@
 # RubinLSSTDP2Data — Notebook Catalogue
 
 **Author:** Sylvie Dagoret-Campagne  
+**Affiliation:** IJCLab / IN2P3 / CNRS  
 **Project:** Rubin Observatory / LSST Data Preview 2 (DP2) — LSSTCam Survey Analysis  
-**Environment:** USDF RSP (Rubin Science Platform) — `LSST` kernel (Python 3.12, `lsst_distrib`)
+**Environment:** USDF RSP (Rubin Science Platform) — `LSST` kernel (Python 3.12, `lsst_distrib`)  
+**Last update:** 2026-04-04
 
 ---
 
 ## Overview
 
-This directory contains a series of Jupyter notebooks developed to explore and analyse  
+This directory contains a series of Jupyter notebooks developed to explore and analyse
 LSSTCam observational data accessible through two complementary interfaces:
 
-- **Butler** (`lsst.daf.butler`): the LSST data access middleware, used for processed data products.
-- **ConsDB** (`lsst.summit.utils.ConsDbClient`): the Consolidated Database, used for visit-level metadata (pointing coordinates, filters, observing conditions, etc.).
+- **Butler** (`lsst.daf.butler`): the LSST data access middleware, used for processed data products
+  (coadds, DiaObjects, DiaSources, Objects, Sources, ForcedSources, survey property maps, …).
+- **ConsDB** (`lsst.summit.utils.ConsDbClient`): the Consolidated Database, used for visit-level
+  metadata (pointing coordinates, filters, observing conditions, etc.).
 
-The notebooks are named `YYYY-MM-DD_<topic>.ipynb` and should be run in order,  
-as each builds on concepts or data structures introduced by its predecessors.
+The notebooks are named `YYYY-MM-DD_<topic>.ipynb` and are ordered chronologically.  
+Many notebooks depend on data or concepts introduced by earlier ones; dependencies are noted
+in each entry.
 
 ---
 
-## Notebooks
+## Notebook Catalogue
 
-### 2026-03-07 — `2026-03-07_AccessToDP2.ipynb`
+### Group 1 — Survey Overview (ConsDB + HEALPix)
+
+---
+
+#### 2026-03-07 — `2026-03-07_AccessToDP2.ipynb`
 
 **Topic:** First contact with DP2 data via the Butler.
 
-This notebook serves as the entry point to LSST Data Preview 2.  
-It demonstrates how to:
+Entry point to LSST Data Preview 2. Demonstrates how to:
 
-- Instantiate a `Butler` pointing at the `dp2_prep` repository and the  
-  `LSSTCam/runs/DRP/v30_0_4/DM-54249` processing collection.
-- Load the `lsst_cells_v2` sky tessellation (`skyMap`) and query its tract/patch structure.
-- Iterate over `exposure` dimension records to retrieve observation metadata  
-  (date, filter, pointing, exposure time, MJD) and assemble them into a `pandas` DataFrame.
-- Map each science exposure to its corresponding Butler tract and patch using  
-  `skymap.findTract` / `tract_info.findPatch`.
-- Produce stacked bar charts (vertical and horizontal) showing the visit count  
-  per band for each `(tract, target)` combination.
-- Focus on the six LSST Deep Drilling Fields (DDFs): XMM-LSS, COSMOS, ECDFS,  
-  ELAIS-S1, EDFS_a, and EDFS_b.
-- Inspect available dataset types in the collection (raw, calexp, dia_source, dia_object, …).
+- Instantiate a `Butler` pointing at the `dp2_prep` repository and the
+  `LSSTCam/runs/DRP/v30_0_4/DM-54249` collection.
+- Load the `lsst_cells_v2` sky tessellation (`skyMap`) and query tract/patch structure.
+- Retrieve observation metadata (date, filter, pointing, MJD) and build a `pandas` DataFrame.
+- Map each science exposure to its tract and patch via `skymap.findTract` / `tract_info.findPatch`.
+- Produce bar charts of visit counts per band for each `(tract, target)` combination.
+- Focus on the six LSST Deep Drilling Fields: XMM-LSS, COSMOS, ECDFS, ELAIS-S1, EDFS_a, EDFS_b.
+- Inspect available dataset types in the collection.
 
-**Key dependencies:** `lsst.daf.butler`, `lsst.skymap`, `lsst.geom`,  
+**Key dependencies:** `lsst.daf.butler`, `lsst.skymap`, `lsst.geom`,
 `pandas`, `matplotlib`, `seaborn`, `astropy`
 
 **References:**
-- USDF Plot Navigator: https://usdf-rsp.slac.stanford.edu/plot-navigator  
+- USDF Plot Navigator: https://usdf-rsp.slac.stanford.edu/plot-navigator
 - DRP Campaign wiki: https://rubinobs.atlassian.net/wiki/spaces/DM/pages/661192727/LSSTCam+Intermittent+DRP+Runs
 
 ---
 
-### 2026-03-09 — `2026-03-09_ConsDB_LSSTCam.ipynb`
+#### 2026-03-09 — `2026-03-09_ConsDB_LSSTCam.ipynb`
 
 **Topic:** LSSTCam visit metadata from ConsDB — sky coverage and observing conditions.
 
-This notebook is the primary data-retrieval notebook for the ConsDB-based analysis chain.  
-It connects directly to the Consolidated Database and explores visit-level metadata  
-for LSSTCam observations taken since 2025-04-15.
+Primary data-retrieval notebook for the ConsDB-based analysis chain.
 
-Key steps:
+- Connect to the ConsDB REST API endpoint.
+- Query `cdb_lsstcam.visit1` and `cdb_lsstcam.exposure`, inner-join on `visit_id`.
+- Clean data (remove engineering/pinhole filters, drop visits with missing coordinates).
+- Visualise sky coverage in Mollweide projection (colour-coded by elapsed time) with
+  Galactic plane and DDF overlays.
+- Plot time series of observing conditions: airmass, temperature, pressure, humidity,
+  wind speed/direction, DIMM seeing, telescope focus.
 
-- Connect to the ConsDB REST API endpoint (`http://consdb-pq.consdb:8080/consdb`)  
-  using `ConsDbClient`.
-- Query both `cdb_lsstcam.visit1` and `cdb_lsstcam.exposure`, then inner-join them  
-  on `visit_id` using `astropy.table.join`.
-- Clean the data: remove engineering/pinhole filters (`other`, `none`, `other:pinhole`)  
-  and drop visits with missing pointing coordinates (`s_ra`, `s_dec`).
-- Explore unique observation dates, physical filters, science programs,  
-  and observation reasons.
-- Plot the distribution of exposure times.
-- Visualise the sky coverage in a Mollweide projection, colour-coded by elapsed time  
-  since the first visit (using the `Spectral` colormap).
-- Overlay the Galactic plane (computed from `astropy.coordinates.SkyCoord`) and  
-  the six Deep Drilling Fields.
-- A helper function `ra_to_mollweide()` handles the RA → [-π, +π] conversion  
-  and axis inversion required by matplotlib's Mollweide projection.
-- Plot time series of key observing-condition quantities stored in ConsDB:  
-  airmass, air temperature, pressure, humidity, wind speed, wind direction,  
-  DIMM seeing, and telescope focus position.
-
-**Key dependencies:** `lsst.summit.utils.ConsDbClient`, `lsst.geom`,  
-`numpy`, `matplotlib`, `seaborn`, `astropy`, `tqdm`
+**Key dependencies:** `lsst.summit.utils.ConsDbClient`, `numpy`, `matplotlib`, `astropy`
 
 **References:**
-- ConsDB REST API: https://usdf-rsp-dev.slac.stanford.edu/consdb/  
-- SDM schema browser: https://sdm-schemas.lsst.io/  
-- ConsDB documentation: https://consdb.lsst.io/index.html
+- ConsDB docs: https://consdb.lsst.io/index.html
+- SDM schema: https://sdm-schemas.lsst.io/
 
 ---
 
-### 2026-03-09 — `2026-03-09_ConsDB_LSSTCam_HEALPix.ipynb`
+#### 2026-03-09 — `2026-03-09_ConsDB_LSSTCam_HEALPix.ipynb`
 
 **Topic:** HEALPix sky maps of LSSTCam visit counts — all bands and per band.
 
-This notebook takes the ConsDB data retrieved in `2026-03-09_ConsDB_LSSTCam.ipynb`  
-and converts the visit pointing coordinates into HEALPix visit-count maps  
-(`healpy`, NSIDE = 64, pixel size ≈ 0.92 deg).
+Takes ConsDB data from the previous notebook and builds HEALPix visit-count maps
+(NSIDE = 64, pixel ≈ 0.92 deg²).
 
-Key features:
-
-- A helper `visits_to_healpix_map(ra_deg, dec_deg)` accumulates visit counts  
-  into HEALPix pixels; unobserved pixels are set to `hp.UNSEEN`.
-- The Galactic plane trace is computed in ICRS using `astropy.coordinates.SkyCoord`  
-  and sorted by RA to avoid spurious connecting lines at the 0°/360° wrap.
-- All sky overlays (Galactic plane, Deep Drilling Field markers and labels)  
-  use `hp.projplot`, `hp.projscatter`, and `hp.projtext` with `lonlat=True`  
-  — these are projection-aware healpy functions that accept plain ICRS (RA, Dec) degrees,  
-  avoiding any manual RA-wrapping.
-- One combined sky map (all bands) and six individual maps (one per band: u, g, r, i, z, y)  
-  are displayed in Mollweide projection with `flip='astro'` (RA increases to the left).
-- A summary table reports, per band: total visit count, number of observed HEALPix pixels,  
-  covered sky area (deg²), maximum visit depth per pixel, mean and median visit depth.
-- Two bar charts compare total visits and sky coverage across bands.
+- One all-band map + six per-band maps (u, g, r, i, z, y) in Mollweide projection.
+- Galactic plane and DDF overlays via `hp.projplot` / `hp.projscatter`.
+- Summary table: total visits, sky area, maximum depth, mean/median depth per band.
 
 **Key dependencies:** `healpy`, `numpy`, `matplotlib`, `astropy`
 
 ---
 
-### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_zoommaps.ipynb`
+#### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_zoommaps.ipynb`
 
-**Topic:** Month-by-month evolution of LSSTCam visit counts across the 6 LSST bands.
+**Topic:** Month-by-month evolution of LSSTCam visit counts (individual zoomed maps per band).
 
-This notebook extends `2026-03-09_ConsDB_LSSTCam_HEALPix.ipynb` by adding a  
-**temporal dimension**: the visit data are sliced by calendar month so that the  
-growth and spatial distribution of the survey can be tracked over time.
-
-Workflow:
-
-1. **Date extraction** — The integer `day_obs` field (format `YYYYMMDD`) is parsed  
-   with `pd.to_datetime` and converted to a `pandas.Period` (`year_month`).  
-   The sorted list of unique months drives all subsequent loops.
-
-2. **Monthly HEALPix sky maps** (Section 6) — For each month and each of the  
-   6 bands (*u, g, r, i, z, y*), a HEALPix visit-count map is built and displayed  
-   in Mollweide projection with the Galactic plane and DDF overlays.  
-   Months or bands with zero visits are skipped gracefully.  
-   Per-band statistics (visit count, pixel count, sky area, max depth) are printed.
-
-3. **Summary table** (Section 7) — A tidy `pandas.DataFrame` (`df_monthly`) collects  
-   visit counts for every `(month, band)` combination, plus a `Total` column.
-
-4. **Grouped bar chart** (Section 8) — One group of 6 colour-coded bars per month,  
-   one bar per band, with the total visit count annotated above each group.
-
-5. **Stacked bar chart** (Section 9) — Same data in a stacked layout to show the  
-   cumulative visit count per month.
-
-6. **Normalised band fraction** (Section 10) — A 100%-stacked bar chart showing  
-   the relative contribution of each band per month, useful for detecting changes  
-   in the survey scheduling strategy.
-
-**Key dependencies:** `healpy`, `numpy`, `pandas`, `matplotlib`, `astropy`
-
----
----
-
-### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_subplots.ipynb`
-
-**Topic:** Month-by-month evolution of LSSTCam visit counts across the 6 LSST bands.
-
-This notebook do the same task as in  `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_zoommaps.ipynb` by adding a   **temporal dimension**: the visit data are sliced by calendar month so that the  
-growth and spatial distribution of the survey can be tracked over time.
-However bands-skymaps are grouped as subplots in the monthly figures.
-Note NSIDE = 32 due to tiny subplots.
-
-Workflow:
-
-1. **Date extraction** — The integer `day_obs` field (format `YYYYMMDD`) is parsed  
-   with `pd.to_datetime` and converted to a `pandas.Period` (`year_month`).  
-   The sorted list of unique months drives all subsequent loops.
-
-2. **Monthly HEALPix sky maps** (Section 6) — For each month and each of the  
-   6 bands (*u, g, r, i, z, y*), a HEALPix visit-count map is built and displayed  
-   in Mollweide projection with the Galactic plane and DDF overlays.  
-   Months or bands with zero visits are skipped gracefully.  
-   Per-band statistics (visit count, pixel count, sky area, max depth) are printed.
-
-3. **Summary table** (Section 7) — A tidy `pandas.DataFrame` (`df_monthly`) collects  
-   visit counts for every `(month, band)` combination, plus a `Total` column.
-
-4. **Grouped bar chart** (Section 8) — One group of 6 colour-coded bars per month,  
-   one bar per band, with the total visit count annotated above each group.
-
-5. **Stacked bar chart** (Section 9) — Same data in a stacked layout to show the  
-   cumulative visit count per month.
-
-6. **Normalised band fraction** (Section 10) — A 100%-stacked bar chart showing  
-   the relative contribution of each band per month, useful for detecting changes  
-   in the survey scheduling strategy.
+Extends the HEALPix notebook by slicing visit data by calendar month.
+For each month: per-band HEALPix maps in Mollweide projection, summary table, grouped and
+stacked bar charts of visit counts, and normalised band fraction chart.
+Each band is shown in a separate figure.
 
 **Key dependencies:** `healpy`, `numpy`, `pandas`, `matplotlib`, `astropy`
 
 ---
 
+#### 2026-03-10 — `2026-03-10_ConsDB_LSSTCam_HEALPix_Monthly_subplots.ipynb`
 
+**Topic:** Month-by-month evolution — bands grouped as 2×3 subplots per monthly figure.
 
+Same analysis as the previous notebook, but the six band maps are grouped into a
+2×3 subplot grid per month for a more compact presentation.
+Note: NSIDE = 32 due to smaller subplot size.
+
+**Key dependencies:** `healpy`, `numpy`, `pandas`, `matplotlib`, `astropy`
+
+---
+
+### Group 2 — Survey Property Maps (HealSparse)
+
+---
+
+#### 2026-03-11 — `2026-03-11_ExploreDP2_SurveyPropertyMaps.ipynb`
+
+**Topic:** Exploration of all survey property map types available in DP2.
+
+Accesses the **survey property maps** (HealSparse format) from the `dp2_prep` butler.
+Catalogues the 14 available map types per band (exposure time, epochs, PSF size,
+PSF ellipticity e1/e2, magnitude limit, sky background, sky noise, DCR shifts/ellipticities),
+lists their dataset types and dimensions, and demonstrates retrieval via
+`butler.get(map_name, dataId={'band': ..., 'skymap': ...})`.
+Also displays pipeline-generated PNG/PDF `SurveyWidePropertyMapPlot` images.
+
+**Key dependencies:** `lsst.daf.butler`, `healsparse`, `numpy`, `matplotlib`
+
+**Available map types (14 per band × 6 bands = 84 maps):**
+`exposure_time_sum`, `epoch_min/max/mean`, `psf_size`, `psf_e1/e2`,
+`psf_maglim`, `sky_background`, `sky_noise`, `dcr_dra/ddec`, `dcr_e1/e2`
+
+---
+
+#### 2026-03-11 — `2026-03-11_ExploreDP2_SurveyPropertyMapsasPlots.ipynb`
+
+**Topic:** Display survey property maps as interactive matplotlib plots (alternative rendering).
+
+Companion to the exploration notebook above. Focuses on rendering the HealSparse maps
+as `pcolormesh` / `imshow` plots using `matplotlib` with adaptive colour normalisation
+(linear, LogNorm, SymLogNorm) and field-centred zoom views for each DDF.
+
+**Key dependencies:** `lsst.daf.butler`, `healsparse`, `numpy`, `matplotlib`
+
+---
+
+#### 2026-03-11 — `2026-03-11_DP2_SurveyPropertyMaps_AllBands_AllDDF.ipynb`
+
+**Topic:** Survey property maps — all 6 bands × all 6 DDF fields — 2×3 subplot grids.
+
+Retrieves a selected HealSparse survey property map from the DP2 butler and
+produces **2×3 subplot grids** (one panel per band: u, g, r, i, z, y)
+centred on each of the six main LSST Deep Drilling Fields:
+COSMOS, ECDFS, EDFS-a, ELAIS-S1, XMM-LSS, ECDFS-ext.
+Displays exposure time, PSF magnitude limit, and sky noise maps by default.
+
+**Requires:** butler connection and `coll_hsp` from `2026-03-11_ExploreDP2_SurveyPropertyMaps.ipynb`.
+
+**Key dependencies:** `lsst.daf.butler`, `healsparse`, `numpy`, `matplotlib`
+
+---
+
+#### 2026-03-12 — `2026-03-12_ExploreDP2_SurveyPropertyMaps_Healpix.ipynb`
+
+**Topic:** Survey property maps — native HEALPix representation via `healpy`.
+
+Alternative visualisation approach: each `HealSparseMap` is converted to a dense
+HEALPix array (`healsparse → healpy`) and displayed with `hp.mollview` / `hp.gnomview`.
+Provides fine control over projection, coordinate graticule, Galactic plane overlay,
+and adaptive colour normalisation. Includes a 2×3 band grid, local `pcolormesh` views,
+statistics over a DDF region, and a loop over all 14 available map types.
+
+**Key dependencies:** `lsst.daf.butler`, `healsparse`, `healpy`, `numpy`, `matplotlib`
+
+---
+
+### Group 3 — Deep Drilling Fields: DiaObjects, Tracts, Light Curves
+
+---
+
+#### 2026-03-13 — `2026-03-13_DP2_DDF_Tracts_SkyMap_Mollweide.ipynb`
+
+**Topic:** SkyMap tracts covering the Deep Drilling Fields — geometry and visualisation.
+
+- Instantiates a Gen3 Butler and loads the `lsst_cells_v2` SkyMap.
+- Identifies all tracts overlapping the DDF fields (WFD and uDDF).
+- Displays the tracts and their patches in a Mollweide projection coloured by tract ID,
+  with DDF centres overlaid.
+- Produces ±5° Cartesian zoom plots for each individual DDF.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.skymap`, `lsst.geom`,
+`numpy`, `matplotlib`, `astropy`
+
+---
+
+#### 2026-03-13 — `2026-03-13_DP2_DDF_DiaObjects_Query.ipynb`
+
+**Topic:** DiaObject catalog query over a DDF — TAP and Butler access methods.
+
+Queries the **DiaObject** catalog for a user-selected DDF via two methods:
+- **TAP / ADQL** for cone search on Qserv.
+- **Butler Gen3** for per-tract parquet tables (`dia_object`, `dia_source`,
+  `dia_object_forced_source`).
+
+Filters on `nDiaSources >= MIN_NSOURCES`, plots spatial distributions and
+variability diagnostics, and prepares the table for coordinate-based
+cross-matching with Fink alerts (sky-coordinate cross-match, since
+`diaObjectId` values differ between Alert Production and DRP pipelines).
+
+**Key dependencies:** `lsst.daf.butler`, `pyvo`, `numpy`, `pandas`, `matplotlib`, `astropy`
+
+---
+
+#### 2026-03-13 — `2026-03-13_DP2_DDF_DiaObjects_Butler_LCandLuptitudes.ipynb`
+
+**Topic:** DiaObject / DiaSource catalogs via Butler — light curves and Luptitudes.
+
+Retrieves `dia_object`, `dia_source`, and `dia_object_forced_source` catalogs
+for COSMOS DDF using Butler Gen3. Plots multi-band light curves (u, g, r, i, z, y)
+with DiaSource detections (marker `o`) and forced photometry (marker `+`),
+in both AB magnitude and Luptitude (asinh magnitude) representations.
+Features dual x-axes (MJD + calendar date), interactive zoom via `ipympl`.
+
+Actual Butler schema used:
+- `dia_object` : dims `(skymap, tract)`
+- `dia_source` : dims `(skymap, tract)`
+- `dia_object_forced_source` : dims `(skymap, tract, patch)` — 21 refs per tract
+
+**Key dependencies:** `lsst.daf.butler`, `numpy`, `pandas`, `matplotlib`, `ipympl`, `astropy`
+
+---
+
+#### 2026-03-14 — `2026-03-14_DP2_DDF_DiaObjects_LightCurves.ipynb`
+
+**Topic:** Multi-band light curves from saved CSV files — DiaSource + ForcedPhotometry.
+
+Reads three CSV files generated by `2026-03-13_DP2_DDF_DiaObjects_Butler_LCandLuptitudes.ipynb`:
+`DiaObjects_COSMOS_nmin200.csv`, `DiaSources_COSMOS_nmin200.csv`, `ForcedSrc_COSMOS_nmin200.csv`.
+
+Plots multi-band light curves for DiaObjects with `nDiaSources > CUT_NDIASOURCES`:
+independent y-axes per band, fixed 16–28 mag range, top calendar-date axis,
+bottom MJD axis, interactive zoom via `ipympl`.
+
+**Input data folder:** `data_DP2_DDF_DIAOBJ_BUTLER_01/`
+
+**Key dependencies:** `numpy`, `pandas`, `matplotlib`, `ipympl`
+
+---
+
+#### 2026-03-16 — `2026-03-16_DP2_DDF_staticObjects_Butler.ipynb`
+
+**Topic:** Static Object / Source catalog query over a DDF via Butler.
+
+Retrieves **Object**, **Source**, and **ForcedSource** (static sky) catalogs
+for a user-selected DDF using Butler Gen3 only.
+Applies star/galaxy separation (`extendedness < 0.5`), selects isolated primary stars,
+and prepares the table for photometric calibration or cross-matching.
+
+Butler schema: `object` (tract), `source` (tract), `object_forced_source` (tract × patch).
+
+**Key dependencies:** `lsst.daf.butler`, `numpy`, `pandas`, `matplotlib`, `astropy`
+
+---
+
+#### 2026-03-17 — `2026-03-17_DP2_DDF_VisitTractPatch_Butler.ipynb`
+
+**Topic:** Mapping visits to tracts and patches via Butler registry.
+
+Retrieves the list of visits associated with a DDF from the Butler registry
+and maps each visit to its corresponding tract/patch in the sky tessellation.
+Produces a visit–tract–patch association table for downstream use
+(e.g. BPS submit of DRP pipeline jobs).
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.skymap`, `lsst.geom`,
+`numpy`, `pandas`, `matplotlib`
+
+---
+
+#### 2026-03-19 — `2026-03-19_DP2_DDF_CoaddsstaticObjects_Butler.ipynb`
+
+**Topic:** Viewing DeepCoadd images aligned with static Object catalog selections.
+
+Retrieves `deepCoadd` images for selected tract/patch combinations via Butler
+and overlays Object catalog positions (isolated primary stars) on the coadd.
+Combines static catalog queries from `2026-03-16` with image access to
+validate the spatial cross-identification of static sources.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.afw`, `numpy`, `matplotlib`
+
+---
+
+### Group 4 — Visit–Tract–Patch Cross-matching and Coadd Visualisation
+
+---
+
+#### 2026-03-25 — `2026-03-25_FindObservationsInButlerRegistryInTractPatch.ipynb`
+
+**Topic:** Associate visits from the Butler registry with tracts and patches — Fink DRP preparation.
+
+**Goal:** Build a complete visit × tract association table to be used for submitting
+DRP pipeline jobs via BPS for the Fink alert broker.
+
+- Queries the Butler main registry for all observations in a DDF.
+- Maps each visit to tract/patch using `skymap.findTract` / `tract_info.findPatch`.
+- Produces a tidy DataFrame suitable for BPS submit configuration.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.skymap`, `lsst.geom`,
+`numpy`, `pandas`, `matplotlib`
+
+---
+
+#### 2026-03-26 — `2026-03-26_DP2_ConstDB_Butler_LSSTCam_VisitsTractPatch.ipynb`
+
+**Topic:** Cross-check ConsDB visit table vs Butler registry — tract/patch mapping.
+
+Cross-checks ConsDB visit metadata with the Butler registry and associates
+each visit with its corresponding sky tract and patch.
+Combines the ConsDB query from `2026-03-09_ConsDB_LSSTCam.ipynb` with the
+tract/patch mapping approach of `2026-03-25`.
+Output is a merged visit table used for survey monitoring and DRP submission.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.skymap`, `lsst.geom`,
+`lsst.summit.utils.ConsDbClient`, `numpy`, `pandas`, `matplotlib`, `astropy`
+
+---
+
+#### 2026-03-26 — `2026-03-26_LSSTCamDeepCoaddsMosaicFirefly.ipynb`
+
+**Topic:** View LSSTCam DeepCoadd mosaic in the Firefly interactive image viewer.
+
+Loads `deepCoadd` images from the Butler and displays them interactively
+using the Firefly web viewer via `lsst.afw.display` and `firefly_client`.
+Allows zooming, panning, WCS-aware coordinate display, and overlay of
+catalog sources on the coadd mosaic.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.afw.display`, `firefly_client`,
+`lsst.skymap`, `lsst.geom`, `numpy`, `matplotlib`
+
+---
+
+#### 2026-03-26 — `2026-03-26_LSSTCamDeepCoaddsMosaicMatplotlib.ipynb`
+
+**Topic:** View LSSTCam DeepCoadd mosaic in matplotlib.
+
+Same purpose as the Firefly notebook, but renders the DeepCoadd mosaic using
+`matplotlib` only (no browser-based viewer required). Uses `lsst.afw.math.binImage`
+for downsampling large coadd tiles before display.
+Suitable for batch or offline environments.
+
+LSST pipeline version: `w_2025_10`.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.afw`, `lsst.skymap`, `lsst.geom`,
+`numpy`, `matplotlib`
+
+---
+
+### Group 5 — Focal Plane Geometry Extraction
+
+---
+
+#### 2026-04-03 — `2026-04-03_LSSTCamExtractFocalPlane.ipynb`
+
+**Topic:** Extract LSSTCam CCD geometry from the camera model.
+
+Extracts the CCD centre positions and corner coordinates for all detectors
+of the LSSTCam focal plane using `lsst.afw.cameraGeom`.
+The output CSV file (`ccd_geometry.csv`) is used by the notebooks in
+`~/Desktop/RubinLSSTSkyAlerts/notebooks/04_calib/` for focal-plane
+heatmap visualisations of photometric calibration diagnostics.
+
+Must be run at SLAC (USDF RSP) and the output file copied locally.
+LSST pipeline version: `w_2026_10`.
+
+Inspired by: https://github.com/PFLeget/dp2_psf/blob/master/rayTracingFocalPlane/extract_ccd_geometry.py
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.afw.cameraGeom`, `lsst.geom`,
+`numpy`, `matplotlib`
+
+---
+
+### Other — Legacy / Tutorial notebooks
+
+---
+
+#### `203_1_Survey_property_maps.ipynb`
+
+**Topic:** Tutorial/reference notebook for survey property maps (DP1-era).
+
+Legacy tutorial notebook (no date prefix). Covers survey property map access
+patterns from DP1, used as a reference when adapting to DP2.
+
+---
 
 ## Environment Setup
 
-All notebooks run inside the Rubin Science Platform (RSP) JupyterHub at USDF,  
+All notebooks run inside the Rubin Science Platform (RSP) JupyterHub at USDF,
 using the `LSST` kernel which provides the full `lsst_distrib` stack.
 
 ```bash
@@ -206,7 +408,7 @@ using the `LSST` kernel which provides the full `lsst_distrib` stack.
 import lsst.pipe.base; print(lsst.pipe.base.__version__)
 ```
 
-ConsDB access requires that the proxy bypass is configured:
+ConsDB access requires configuring the proxy bypass:
 
 ```python
 import os
@@ -215,7 +417,30 @@ os.environ['no_proxy'] += ',.consdb'
 
 ---
 
+## Data Folders
+
+| Folder | Contents |
+|--------|----------|
+| `data_DP2_DDF_DIAOBJ_BUTLER_01/` | CSV exports of DiaObject / DiaSource / ForcedSource catalogs for COSMOS DDF (generated by notebook 2026-03-13) |
+| `data_fromFink/` | Alert data downloaded from the Fink broker for cross-matching |
+| `tools/` | Shared utility scripts |
+
+---
+
+## Cross-references with Other Projects
+
+| This project | Links to |
+|---|---|
+| `2026-04-03_LSSTCamExtractFocalPlane.ipynb` | Produces `ccd_geometry.csv` used in `~/Desktop/RubinLSSTSkyAlerts/notebooks/04_calib/` |
+| `2026-03-25`, `2026-03-26` visit–tract notebooks | Feed visit lists to Fink alert broker DRP submission |
+| `2026-03-13_DP2_DDF_DiaObjects_Query.ipynb` | Prepares DDF DiaObject tables for Fink coordinate cross-matching |
+
+---
+
 ## Survey Status
 
-Current DP2 survey progress and nightly validation:  
+Current DP2 survey progress and nightly validation:
 https://survey-strategy.lsst.io/progress/sv_status/sv_20250930.html
+
+DRP campaign wiki:
+https://rubinobs.atlassian.net/wiki/spaces/DM/pages/661192727/LSSTCam+Intermittent+DRP+Runs
