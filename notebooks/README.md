@@ -4,7 +4,7 @@
 **Affiliation:** IJCLab / IN2P3 / CNRS  
 **Project:** Rubin Observatory / LSST Data Preview 2 (DP2) — LSSTCam Survey Analysis  
 **Environment:** USDF RSP (Rubin Science Platform) — `LSST` kernel (Python 3.12, `lsst_distrib`)  
-**Last update:** 2026-04-04
+**Last update:** 2026-04-08
 
 ---
 
@@ -296,7 +296,7 @@ validate the spatial cross-identification of static sources.
 
 ---
 
-### Group 4 — Visit–Tract–Patch Cross-matching and Coadd Visualisation
+### Group 4 — Visit–Tract–Patch Cross-matching and Image Visualisation
 
 ---
 
@@ -358,6 +358,33 @@ LSST pipeline version: `w_2025_10`.
 
 **Key dependencies:** `lsst.daf.butler`, `lsst.afw`, `lsst.skymap`, `lsst.geom`,
 `numpy`, `matplotlib`
+
+---
+
+#### 2026-04-04 — `2026-04-04_LSSTCamSingleVisitFirefly.ipynb`
+
+**Topic:** View a single LSSTCam visit (calexp) in the Firefly interactive image viewer.
+
+Loads a single `calexp` (calibrated science exposure) from the Butler
+using the DP2 DRP collection `LSSTCam/runs/DRP/DP2/v30_0_0/DM-53881`
+and displays it interactively in Firefly via `lsst.afw.display`.
+
+- Butler repository: `dp2_prep`; skymap: `lsst_cells_v2`.
+- DRP collection covers three epochs of raw data:
+  - epoch1: 2025-04-24 → 2025-07-02
+  - epoch2: 2025-07-03 → 2025-09-21
+  - epoch3: 2025-10-24 → 2026-01-06
+- Demonstrates selection of a specific visit by `(instrument, detector, visit)` dataId.
+- Overlays source catalog detections (from `src`) on the calexp in Firefly.
+- Serves as an interactive quality-control tool for single-epoch images.
+
+**Key dependencies:** `lsst.daf.butler`, `lsst.afw.display`, `firefly_client`,
+`lsst.skymap`, `lsst.geom`, `numpy`, `matplotlib`
+
+**References:**
+- DRP run DM-53881: https://rubinobs.atlassian.net/browse/DM-53881
+- DP1 Firefly tutorial: https://dp1.lsst.io/tutorials/notebook/103/notebook-103-5.html
+- Quantum graphs: https://tigress-web.princeton.edu/~lkelvin/pipelines/current/drp_pipe/
 
 ---
 
