@@ -425,6 +425,10 @@ patterns from DP1, used as a reference when adapting to DP2.
 
 ---
 
+## Language Notes
+
+All code comments in the notebooks have been translated from French to English to improve international accessibility and collaboration. The technical content, variable names, and functionality remain unchanged.
+
 ## Environment Setup
 
 All notebooks run inside the Rubin Science Platform (RSP) JupyterHub at USDF,
